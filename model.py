@@ -19,49 +19,53 @@ class CIFAR10_CNN(nn.Module):
         
         # C1: Initial convolution block (RF: 3)
         self.c1 = nn.Sequential(
-            ConvBlock(3, 32, kernel_size=3, padding=1),  # RF: 3
-            ConvBlock(32, 32, kernel_size=3, padding=1), # RF: 5
+            nn.Conv2d(3, 16, kernel_size=3,stride=1, padding=1,bias=False), # RF: 3
+            nn.BatchNorm2d(16),
+            nn.Conv2d(16, 16, kernel_size=3,stride=1, padding=1,bias=False), # RF: 5
+            nn.BatchNorm2d(16),
         )
         
         # C2: Depthwise Separable Convolution block (RF increases)
         self.c2 = nn.Sequential(
-            DepthwiseSeparableConv(32, 64, kernel_size=3, padding=1),  # RF: 7
-            ConvBlock(64, 64, kernel_size=3, padding=1),  # RF: 9
-        )
-        
+                  nn.Conv2d(16, 16, kernel_size=3, stride=1, padding=1, groups=16,
+                            bias=False),
+                  #  convolution (1x1)
+                  nn.Conv2d(16, 32, kernel_size=1, bias=False),# RF: 7
+
+                  nn.BatchNorm2d(32),
+                  nn.Conv2d(32, 32, kernel_size=3,stride=1, padding=1,bias=False), # RF: 9
+                  nn.BatchNorm2d(32),
+                )
+
         # C3: Standard convolution with dilated conv (RF increases significantly)
         self.c3 = nn.Sequential(
-            ConvBlock(64, 128, kernel_size=3, padding=1),  # RF: 11
-            DilatedConvBlock(128, 128, kernel_size=3, dilation=2),  # RF: 15 (dilated)
-            ConvBlock(128, 128, kernel_size=3, padding=1),  # RF: 17
+            nn.Conv2d(32, 48, kernel_size=3,stride=1, padding=1,bias=False), # RF: 11
+            nn.BatchNorm2d(48),
+            nn.Conv2d(48, 48, kernel_size=3, padding=2, dilation=2, bias=False), # RF: 15 (dilated)
+            nn.BatchNorm2d(48),
+            nn.Conv2d(48, 48, kernel_size=3,stride=1, padding=1,bias=False), # RF: 5
+            nn.BatchNorm2d(48),
         )
         
         # C4: Final block with dilated convolution for downsampling (instead of stride)
         # Using dilated convolutions with higher dilation for effective downsampling
         self.c4 = nn.Sequential(
-            DilatedConvBlock(128, 256, kernel_size=3, dilation=4),  # RF: 25 (high dilation)
-            ConvBlock(256, 256, kernel_size=3, padding=1),  # RF: 27
-            DilatedConvBlock(256, 256, kernel_size=3, dilation=8),  # RF: 43 (very high dilation)
-            ConvBlock(256, 256, kernel_size=1, padding=0),  # 1x1 conv, RF unchanged
+            nn.Conv2d(48, 64, kernel_size=3, padding=4, dilation=4, bias=False), # RF: 25 (high dilation)
+            nn.BatchNorm2d(64),
+            nn.Conv2d(64, 64, kernel_size=3,stride=1, padding=1,bias=False), # RF: 27
+            nn.BatchNorm2d(64),
+            nn.Conv2d(64, 64, kernel_size=3, padding=8, dilation=8, bias=False), # RF: 43 (very high dilation)
+            nn.BatchNorm2d(64),
+            nn.Conv2d(64, 64, kernel_size=1,stride=1, padding=0,bias=False), # 1x1 conv, RF unchanged
+            nn.BatchNorm2d(64),
         )
         
         # Global Average Pooling
         self.gap = nn.AdaptiveAvgPool2d(1)
         
         # Fully Connected layer after GAP
-        self.fc = nn.Linear(256, num_classes)
-        
-        # Initialize weights
-        #self._initialize_weights()
-        
-    def _initialize_weights(self):
-        for m in self.modules():
-            if isinstance(m, nn.Conv2d):
-                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
-            elif isinstance(m, nn.BatchNorm2d):
-                nn.init.constant_(m.weight, 1)
-                nn.init.constant_(m.bias, 0)
-    
+        self.fc = nn.Linear(64, num_classes)
+
     def forward(self, x):
         x = self.c1(x)
         x = self.c2(x)

@@ -13,7 +13,7 @@ class Config:
     
     # Training
     BATCH_SIZE = 128
-    LEARNING_RATE = 0.01
+    LEARNING_RATE = 0.02
     MOMENTUM = 0.9
     WEIGHT_DECAY = 1e-4
     NUM_EPOCHS = 50
