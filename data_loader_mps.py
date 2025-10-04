@@ -5,7 +5,40 @@ import numpy as np
 import random
 from PIL import Image
 import platform
+# import albumentations as A
+# from albumentations.pytorch import ToTensorV2
 
+
+# def get_albumentations_transforms(config):
+#     train_transform = A.Compose([
+#         A.HorizontalFlip(p=0.5),
+#         A.ShiftScaleRotate(
+#             shift_limit=0.1,
+#             scale_limit=0.1,
+#             rotate_limit=15,
+#             p=0.5
+#         ),
+#         A.CoarseDropout(
+#             max_holes=1,
+#             max_height=16,
+#             max_width=16,
+#             min_holes=1,
+#             min_height=16,
+#             min_width=16,
+#             fill_value=config.MEAN,
+#             mask_fill_value=None,
+#             p=0.5
+#         ),
+#         A.Normalize(mean=config.MEAN, std=config.STD),
+#         ToTensorV2()
+#     ])
+    
+#     val_transform = A.Compose([
+#         A.Normalize(mean=config.MEAN, std=config.STD),
+#         ToTensorV2()
+#     ])
+    
+#     return train_transform, val_transform
 
 class CutoutTransform:
     """Custom implementation of Cutout/CoarseDropout using torchvision"""
@@ -116,6 +149,8 @@ def get_transforms_mps(config):
         transforms.ToTensor(),
         transforms.Normalize(mean=config.MEAN, std=config.STD)
     ])
+
+    # train_transform, val_transform = get_albumentations_transforms(config)
     
     return train_transform, val_transform
 
